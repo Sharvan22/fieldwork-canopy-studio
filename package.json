@@ -1,0 +1,40 @@
+{
+  "name": "fieldwork-canopy-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "check": "tsc --noEmit",
+    "test": "tsx --test tests/service.test.ts",
+    "test:browser": "playwright test",
+    "build": "npm run check && vite build && node tools/build-server.mjs",
+    "start": "node dist/server.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/manrope": "^5.3.0",
+    "@fontsource/barlow-condensed": "^5.3.0",
+    "@netlify/blobs": "10.7.13",
+    "lucide-react": "0.468.0",
+    "pdf-lib": "1.17.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "three": "0.172.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.1",
+    "@types/node": "22.15.30",
+    "@types/react": "18.3.20",
+    "@types/react-dom": "18.3.6",
+    "@types/three": "0.172.0",
+    "@vitejs/plugin-react": "4.4.1",
+    "esbuild": "0.25.12",
+    "tsx": "4.20.6",
+    "typescript": "5.8.3",
+    "vite": "^6.4.1"
+  }
+}

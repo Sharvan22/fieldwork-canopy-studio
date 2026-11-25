@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Embedded canopy studio · Fieldwork</title>
+    <link rel="icon" href="/fieldwork.svg" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #e8ece4;
+        color: #24382b;
+        font:
+          14px/1.5 system-ui,
+          sans-serif;
+      }
+      .host {
+        max-width: 1480px;
+        margin: auto;
+        padding: 18px clamp(12px, 3vw, 44px);
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        font-size: 20px;
+        letter-spacing: -0.6px;
+        margin: 0;
+      }
+      a {
+        color: inherit;
+      }
+      iframe {
+        display: block;
+        width: 100%;
+        height: 920px;
+        border: 1px solid #c7d1c3;
+        border-radius: 10px;
+        background: #fafbf7;
+      }
+      .event {
+        padding: 12px 0 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      #receipt {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="host">
+      <header>
+        <h1>Storefront embed demo</h1>
+        <a href="/">Open standalone studio</a>
+      </header>
+      <iframe
+        id="studio"
+        title="Fieldwork canopy configurator"
+        allow="fullscreen"
+        referrerpolicy="origin"
+      ></iframe>
+      <p class="event" role="status" id="event">Host is listening for a cart submission.</p>
+      <p id="receipt"><a>Open production proof</a></p>
+    </main>
+    <script>
+      const studio = document.getElementById('studio')
+      const source = new URL('/?embed=1', studio.dataset.studioOrigin || location.origin)
+      source.searchParams.set('parentOrigin', location.origin)
+      window.addEventListener('message', (event) => {
+        const message = event.data
+        if (
+          event.source !== studio.contentWindow ||
+          event.origin !== source.origin ||
+          message?.source !== 'fieldwork-studio' ||
+          message.version !== 1
+        )
+          return
+        if (message.type === 'resize' && Number.isFinite(message.payload?.height)) {
+          studio.style.height = Math.max(480, Math.min(8000, message.payload.height + 2)) + 'px'
+          return
+        }
+        if (message.type !== 'cart:add') return
+        const receipt = message.payload
+        document.getElementById('event').textContent =
+          'Host received ' +
+          receipt.items.length +
+          ' Shopify line item(s) for ' +
+          receipt.proof.id +
+          '. Quoted total ' +
+          new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+            receipt.quote.totalCents / 100,
+          ) +
+          '.'
+        const proof = new URL(receipt.proof.pdfUrl, source.origin)
+        if (proof.origin === source.origin) {
+          const link = document.querySelector('#receipt a')
+          link.href = proof.href
+          document.getElementById('receipt').style.display = 'block'
+        }
+      })
+      studio.src = source.href
+    </script>
+  </body>
+</html>

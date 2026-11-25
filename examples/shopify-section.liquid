@@ -1,0 +1,55 @@
+{% comment %}
+  Add this file to a theme's sections directory, add the section to a product template,
+  and set the studio origin. Configure real variant IDs and matching prices in the
+  service catalogue before enabling live cart writes in the theme editor.
+{% endcomment %}
+<iframe id="fieldwork-{{ section.id }}" title="Customize your canopy" width="100%" height="920" style="border:0" allow="fullscreen" referrerpolicy="origin"></iframe>
+<p id="fieldwork-status-{{ section.id }}" role="status"></p>
+<script>
+(() => {
+  const studio = document.getElementById('fieldwork-{{ section.id }}');
+  const status = document.getElementById('fieldwork-status-{{ section.id }}');
+  const configured = {{ section.settings.studio_origin | json }};
+  if (!configured) { status.textContent = 'Set the canopy studio URL in this section.'; return; }
+  const url = new URL('/?embed=1', configured);
+  url.searchParams.set('parentOrigin', location.origin);
+  const writeCart = {{ section.settings.live_cart | json }};
+  const handled = new Set();
+  window.addEventListener('message', async event => {
+    const message = event.data;
+    if (event.source !== studio.contentWindow || event.origin !== url.origin || message?.source !== 'fieldwork-studio' || message.version !== 1) return;
+    if (message.type === 'resize' && Number.isFinite(message.payload?.height)) {
+      studio.style.height = Math.max(480, Math.min(8000, message.payload.height + 2)) + 'px'; return;
+    }
+    if (message.type !== 'cart:add') return;
+    const receipt = message.payload;
+    if (!writeCart) { status.textContent = 'Demo cart received. Configuration ' + receipt.proof.id; return; }
+    if (handled.has(receipt.id)) return;
+    handled.add(receipt.id);
+    try {
+      const response = await fetch(window.Shopify.routes.root + 'cart/add.js', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ items: receipt.items })
+      });
+      if (!response.ok) throw new Error((await response.json()).description || 'Could not add this design to the store cart.');
+      status.textContent = 'Custom canopy added to your store cart.';
+      window.location.assign(window.Shopify.routes.root + 'cart');
+    } catch (error) {
+      handled.delete(receipt.id);
+      status.textContent = error.message;
+    }
+  });
+  studio.src = url.href;
+})();
+</script>
+{% schema %}
+{
+  "name": "Fieldwork canopy studio",
+  "settings": [
+    { "type": "url", "id": "studio_origin", "label": "Studio origin" },
+    { "type": "checkbox", "id": "live_cart", "label": "Send configured variants to Shopify cart", "default": false }
+  ],
+  "presets": [{ "name": "Fieldwork canopy studio" }]
+}
+{% endschema %}
+

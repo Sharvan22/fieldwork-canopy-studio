@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+.netlify/
+.openai/
+dist/
+.data/
+.sites-runtime/
+.vite/
+playwright-report/
+test-results/
+*.log
+__pycache__/
